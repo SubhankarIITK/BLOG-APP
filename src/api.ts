@@ -95,6 +95,7 @@ export type BlogComment = {
 
 const fallbackImage = "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=85";
 const storageKey = "luma-auth-token";
+const API_BASE = "https://blog-app-cyef.onrender.com";
 
 export function plainText(value: string) {
   const document = new DOMParser().parseFromString(value, "text/html");
@@ -178,28 +179,28 @@ function toComment(comment: any): BlogComment {
 }
 
 export async function fetchStories(): Promise<Article[]> {
-  const response = await fetch("/api/v1/stories");
+  const response = await fetch(`${API_BASE}/api/v1/stories`);
   if (!response.ok) throw new Error("Unable to load stories.");
   const data = await response.json();
   return data.stories.map(toArticle);
 }
 
 export async function fetchStory(storyId: string): Promise<Article> {
-  const response = await fetch(`/api/v1/stories/${storyId}`, { headers: authHeaders() });
+  const response = await fetch(`${API_BASE}/api/v1/stories/${storyId}`, { headers: authHeaders() });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Unable to load story.");
   return toArticle(data.story);
 }
 
 export async function fetchMyStories(): Promise<Article[]> {
-  const response = await fetch("/api/v1/stories/mine", { headers: authHeaders() });
+  const response = await fetch(`${API_BASE}/api/v1/stories/mine`, { headers: authHeaders() });
   if (!response.ok) throw new Error("Unable to load your stories.");
   const data = await response.json();
   return data.stories.map(toArticle);
 }
 
 export async function publishStory(title: string, content: string, tags: string[] = []): Promise<Article> {
-  const response = await fetch("/api/v1/stories", {
+  const response = await fetch(`${API_BASE}/api/v1/stories`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ title, content, tags, status: "published" }),
@@ -210,7 +211,7 @@ export async function publishStory(title: string, content: string, tags: string[
 }
 
 export async function updateStory(storyId: string, title: string, content: string, status?: "draft" | "published", tags?: string[]): Promise<Article> {
-  const response = await fetch(`/api/v1/stories/${storyId}`, {
+  const response = await fetch(`${API_BASE}/api/v1/stories/${storyId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ title, content, status, tags }),
@@ -221,7 +222,7 @@ export async function updateStory(storyId: string, title: string, content: strin
 }
 
 export async function saveDraft(storyId: string | null, title: string, content: string, tags: string[] = []): Promise<Article> {
-  const response = await fetch("/api/v1/drafts", {
+  const response = await fetch(`${API_BASE}/api/v1/drafts`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ storyId, title, content, tags }),
@@ -232,14 +233,14 @@ export async function saveDraft(storyId: string | null, title: string, content: 
 }
 
 export async function fetchLatestDraft(): Promise<Article | null> {
-  const response = await fetch("/api/v1/drafts/latest", { headers: authHeaders() });
+  const response = await fetch(`${API_BASE}/api/v1/drafts/latest`, { headers: authHeaders() });
   if (!response.ok) throw new Error("Unable to load draft.");
   const data = await response.json();
   return data.draft ? toArticle(data.draft) : null;
 }
 
 export async function discardDraft(storyId: string): Promise<void> {
-  const response = await fetch(`/api/v1/drafts/${storyId}`, { method: "DELETE", headers: authHeaders() });
+  const response = await fetch(`${API_BASE}/api/v1/drafts/${storyId}`, { method: "DELETE", headers: authHeaders() });
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(data.error || "Unable to discard draft.");
@@ -264,7 +265,7 @@ function toInvite(invite: any): CollaborationInvite {
 }
 
 export async function fetchCollaborationInvites(): Promise<CollaborationInvites> {
-  const response = await fetch("/api/v1/collaboration-invites", { headers: authHeaders() });
+  const response = await fetch(`${API_BASE}/api/v1/collaboration-invites`, { headers: authHeaders() });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Unable to load collaboration invites.");
   return {
@@ -275,7 +276,7 @@ export async function fetchCollaborationInvites(): Promise<CollaborationInvites>
 }
 
 export async function inviteCollaborator(storyId: string, email: string): Promise<CollaborationInvite> {
-  const response = await fetch(`/api/v1/stories/${storyId}/collaborators`, {
+  const response = await fetch(`${API_BASE}/api/v1/stories/${storyId}/collaborators`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ email }),
@@ -286,21 +287,21 @@ export async function inviteCollaborator(storyId: string, email: string): Promis
 }
 
 export async function acceptCollaborationInvite(inviteId: string): Promise<{ invite: CollaborationInvite; story: Article | null }> {
-  const response = await fetch(`/api/v1/collaboration-invites/${inviteId}/accept`, { method: "POST", headers: authHeaders() });
+  const response = await fetch(`${API_BASE}/api/v1/collaboration-invites/${inviteId}/accept`, { method: "POST", headers: authHeaders() });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Unable to accept invite.");
   return { invite: toInvite(data.invite), story: data.story ? toArticle(data.story) : null };
 }
 
 export async function rejectCollaborationInvite(inviteId: string): Promise<{ invite: CollaborationInvite; story: Article | null }> {
-  const response = await fetch(`/api/v1/collaboration-invites/${inviteId}/reject`, { method: "POST", headers: authHeaders() });
+  const response = await fetch(`${API_BASE}/api/v1/collaboration-invites/${inviteId}/reject`, { method: "POST", headers: authHeaders() });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Unable to reject invite.");
   return { invite: toInvite(data.invite), story: data.story ? toArticle(data.story) : null };
 }
 
 export async function removeCollaborator(storyId: string, userId: string): Promise<Article> {
-  const response = await fetch(`/api/v1/stories/${storyId}/collaborators/${userId}`, {
+  const response = await fetch(`${API_BASE}/api/v1/stories/${storyId}/collaborators/${userId}`, {
     method: "DELETE",
     headers: authHeaders(),
   });
@@ -310,14 +311,14 @@ export async function removeCollaborator(storyId: string, userId: string): Promi
 }
 
 export async function fetchAdminAnalytics(range: string): Promise<AdminAnalytics> {
-  const response = await fetch(`/api/v1/admin/analytics?range=${encodeURIComponent(range)}`, { headers: authHeaders() });
+  const response = await fetch(`${API_BASE}/api/v1/admin/analytics?range=${encodeURIComponent(range)}`, { headers: authHeaders() });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Unable to load admin analytics.");
   return data.analytics;
 }
 
 export async function adminDeleteStory(storyId: string): Promise<void> {
-  const response = await fetch(`/api/v1/admin/stories/${storyId}`, { method: "DELETE", headers: authHeaders() });
+  const response = await fetch(`${API_BASE}/api/v1/admin/stories/${storyId}`, { method: "DELETE", headers: authHeaders() });
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(data.error || "Unable to remove story.");
@@ -325,7 +326,7 @@ export async function adminDeleteStory(storyId: string): Promise<void> {
 }
 
 export async function deleteStory(storyId: string): Promise<void> {
-  const response = await fetch(`/api/v1/stories/${storyId}`, {
+  const response = await fetch(`${API_BASE}/api/v1/stories/${storyId}`, {
     method: "DELETE",
     headers: authHeaders(),
   });
@@ -338,7 +339,7 @@ export async function deleteStory(storyId: string): Promise<void> {
 export async function uploadImage(file: File): Promise<string> {
   const form = new FormData();
   form.append("image", file);
-  const response = await fetch("/api/v1/uploads/image", {
+  const response = await fetch(`${API_BASE}/api/v1/uploads/image`, {
     method: "POST",
     headers: authHeaders(),
     body: form,
@@ -349,14 +350,14 @@ export async function uploadImage(file: File): Promise<string> {
 }
 
 export async function fetchMyStats(): Promise<DashboardStats> {
-  const response = await fetch("/api/v1/stats/me", { headers: authHeaders() });
+  const response = await fetch(`${API_BASE}/api/v1/stats/me`, { headers: authHeaders() });
   if (!response.ok) throw new Error("Unable to load dashboard stats.");
   const data = await response.json();
   return data.stats;
 }
 
 export async function toggleLike(storyId: string): Promise<Article> {
-  const response = await fetch(`/api/v1/stories/${storyId}/like`, {
+  const response = await fetch(`${API_BASE}/api/v1/stories/${storyId}/like`, {
     method: "POST",
     headers: authHeaders(),
   });
@@ -366,21 +367,21 @@ export async function toggleLike(storyId: string): Promise<Article> {
 }
 
 export async function recordStoryView(storyId: string): Promise<Article> {
-  const response = await fetch(`/api/v1/stories/${storyId}/view`, { method: "POST" });
+  const response = await fetch(`${API_BASE}/api/v1/stories/${storyId}/view`, { method: "POST" });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Unable to record view.");
   return toArticle(data.story);
 }
 
 export async function fetchComments(storyId: string): Promise<BlogComment[]> {
-  const response = await fetch(`/api/v1/stories/${storyId}/comments`);
+  const response = await fetch(`${API_BASE}/api/v1/stories/${storyId}/comments`);
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Unable to load comments.");
   return data.comments.map(toComment);
 }
 
 export async function createComment(storyId: string, body: string): Promise<BlogComment> {
-  const response = await fetch(`/api/v1/stories/${storyId}/comments`, {
+  const response = await fetch(`${API_BASE}/api/v1/stories/${storyId}/comments`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ body }),
@@ -391,7 +392,7 @@ export async function createComment(storyId: string, body: string): Promise<Blog
 }
 
 export async function deleteComment(commentId: string): Promise<void> {
-  const response = await fetch(`/api/v1/comments/${commentId}`, { method: "DELETE", headers: authHeaders() });
+  const response = await fetch(`${API_BASE}/api/v1/comments/${commentId}`, { method: "DELETE", headers: authHeaders() });
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(data.error || "Unable to delete comment.");
@@ -407,7 +408,7 @@ export async function askCopilot(input: {
   action?: string;
   tags?: string[];
 }): Promise<string> {
-  const response = await fetch("/api/v1/ai/assist", {
+  const response = await fetch(`${API_BASE}/api/v1/ai/assist`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(input),
@@ -418,7 +419,7 @@ export async function askCopilot(input: {
 }
 
 export async function login(email: string, password: string): Promise<{ user: User; token: string }> {
-  const response = await fetch("/api/v1/auth/login", {
+  const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -430,7 +431,7 @@ export async function login(email: string, password: string): Promise<{ user: Us
 }
 
 export async function signup(email: string, name: string, password: string): Promise<{ user: User; token: string }> {
-  const response = await fetch("/api/v1/auth/signup", {
+  const response = await fetch(`${API_BASE}/api/v1/auth/signup`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, name, password }),
@@ -442,7 +443,7 @@ export async function signup(email: string, name: string, password: string): Pro
 }
 
 export async function fetchMe(): Promise<User> {
-  const response = await fetch("/api/v1/auth/me", { headers: authHeaders() });
+  const response = await fetch(`${API_BASE}/api/v1/auth/me`, { headers: authHeaders() });
   if (!response.ok) throw new Error("Not authenticated.");
   const data = await response.json();
   return data.user;
@@ -451,20 +452,20 @@ export async function fetchMe(): Promise<User> {
 export async function logout(): Promise<void> {
   const token = localStorage.getItem(storageKey);
   if (token) {
-    await fetch("/api/v1/auth/logout", { method: "POST", headers: { ...authHeaders() } });
+    await fetch(`${API_BASE}/api/v1/auth/logout`, { method: "POST", headers: { ...authHeaders() } });
   }
   localStorage.removeItem(storageKey);
 }
 
 export async function fetchBookmarks(): Promise<Article[]> {
-  const response = await fetch("/api/v1/bookmarks", { headers: authHeaders() });
+  const response = await fetch(`${API_BASE}/api/v1/bookmarks`, { headers: authHeaders() });
   if (!response.ok) throw new Error("Unable to load bookmarks.");
   const data = await response.json();
   return data.bookmarks.map(toArticle);
 }
 
 export async function toggleBookmark(storyId: string): Promise<Article[]> {
-  const response = await fetch(`/api/v1/bookmarks/${storyId}`, {
+  const response = await fetch(`${API_BASE}/api/v1/bookmarks/${storyId}`, {
     method: "POST",
     headers: authHeaders(),
   });
